@@ -2,7 +2,9 @@
 from control.lowpass import LowPassFilter
 from math import atan
 import rospy
-
+import numpy as np
+from pid import PID
+from math import atan
 
 class SteeringAngleController():
     def __init__(self, wheel_base, steering_ratio, max_steering_angle, max_lateral_acc):
@@ -17,14 +19,27 @@ class SteeringAngleController():
         #   - assume angular velocity / linear velocity = target angular velocity / target linear velocity
         #   - make sure to cap angular velocity to avoid exceeeding max lateral acceleration (clip angular velocity to [-max_angular_vel, max_angular_vel])
         #   - Compute max allowed angular velocity from given max allowed lateral acceleration using uniform circular motion equations 
+        velocity_ang = current_linear_velocity * target_angular_velocity / target_linear_velocity  
+        velocity_ang = np.clip(velocity_ang, -max_lateral_acc, max_lateral_acc)
+        
+        
         # 2. Compute the vehicle steering angle:
         #   - if angular velocity is 0, the angle should also be 0
         #   - compute the turning radius from angular velocity using circular motion equations
         #   - use the bicycle model equations to compute the steering angle corresponding to the turning radius
-        # 3. Compute the *steering wheel* angle:
+         # 3. Compute the *steering wheel* angle:
         #   - steering wheel angle = steering angle * steering ratio
         #   - clip the steering wheel angle to [-max steering wheel angle, max steering wheel angle]
-        return 0.0
+
+        if (velocity_ang == 0){
+            angle = 0.0
+        }else{
+            r = max(current_linear_velocity, 0.1) / velocity_ang
+            angle = atan(self.wheel_base / r) * self.steer_ratio
+            angle  = np.clip(angle, -max_steering_angle, max_steering_angle)
+        }
+
+        return angle
 
 
 class ThrottleBrakeController():
@@ -35,14 +50,41 @@ class ThrottleBrakeController():
         self.wheel_radius = wheel_radius
         self.last_time = rospy.get_time()
 
+        kp = 0.3
+        ki = 0.1
+        kd = 0.
+        self.throttle_controller_pid = PID(kp, ki, kd)
+
     def control(self, current_speed, target_speed):
         # TODO You can implement and tune a PID Controller here to control the throttle
         # TODO After predicting throttle, you can handle braking as a postprocessing step
-        #   - The car has an automatic transmission, so if target velocity is 0 and current linear velocity is small or zero, you should apply brake (Need ~700Nm brake so the car won't move when it's currently at speed 0)
+        #   - The car has an automatic transmission, so if target velocity is 0 and current linear velocity is small or zero,
+        #        you should apply brake (Need ~700Nm brake so the car won't move when it's currently at speed 0)
         #   - don't brake and throttle at the same time! 
         #   - Apply brake if throttle is already small, but you need to slow down
         #   - In order to get a smooth ride, you should also not decelerate more than the given deceleration limit.
         # For now, we just blindly accelerate!
+
         current_speed = self.lowpass_filter.filter(current_speed) # Use LowPass filter to filter noise from velocity
+
+        error_vel = target_speed - current_speed
+
+        self.last_velocity = current_speed
+
+        current_time = rospy.get_time()
+        sample_time = current_time - self.last_time
+        self.last_time = current_time
+
+        throttle = self.throttle_controller_pid.step(error_vel, sample_time)
+
         throttle, brake = 1.0, 0.0
+
+         if target_speed == 0. and current_speed < 0.1:
+            throttle = 0
+            brake = 700
+        elif throttle < .1 and error_vel < 0:
+            throttle = 0
+            decel = max(error_vel, self.decel_limit)
+            brake = abs(decel) * self.vehicle_mass * self.wheel_radius 
+
         return throttle, brake 
