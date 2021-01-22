@@ -1,5 +1,5 @@
 
-from control.lowpass import LowPassFilter
+from lowpass import LowPassFilter
 from math import atan
 import rospy
 import numpy as np
@@ -19,8 +19,8 @@ class SteeringAngleController():
         #   - assume angular velocity / linear velocity = target angular velocity / target linear velocity
         #   - make sure to cap angular velocity to avoid exceeeding max lateral acceleration (clip angular velocity to [-max_angular_vel, max_angular_vel])
         #   - Compute max allowed angular velocity from given max allowed lateral acceleration using uniform circular motion equations 
-        velocity_ang = current_linear_velocity * target_angular_velocity / target_linear_velocity  
-        velocity_ang = np.clip(velocity_ang, -max_lateral_acc, max_lateral_acc)
+        velocity_ang = current_linear_velocity * target_angular_velocity / target_linear_velocity  if abs(target_linear_velocity) > 0. else 0.
+        velocity_ang = np.clip(velocity_ang, -self.max_lateral_acc, self.max_lateral_acc)
         
         
         # 2. Compute the vehicle steering angle:
@@ -31,13 +31,13 @@ class SteeringAngleController():
         #   - steering wheel angle = steering angle * steering ratio
         #   - clip the steering wheel angle to [-max steering wheel angle, max steering wheel angle]
 
-        if (velocity_ang == 0){
+        if velocity_ang == 0:
             angle = 0.0
-        }else{
+        else:
             r = max(current_linear_velocity, 0.1) / velocity_ang
-            angle = atan(self.wheel_base / r) * self.steer_ratio
-            angle  = np.clip(angle, -max_steering_angle, max_steering_angle)
-        }
+            angle = atan(self.wheel_base / r) * self.steering_ratio
+            angle  = np.clip(angle, -self.max_steering_angle, self.max_steering_angle)
+        
 
         return angle
 
@@ -53,6 +53,8 @@ class ThrottleBrakeController():
         kp = 0.3
         ki = 0.1
         kd = 0.
+        mn = 0. # Minimum throttle value
+        mx = 0.2 # Maximum throttle value
         self.throttle_controller_pid = PID(kp, ki, kd)
 
     def control(self, current_speed, target_speed):
@@ -79,12 +81,12 @@ class ThrottleBrakeController():
 
         throttle, brake = 1.0, 0.0
 
-         if target_speed == 0. and current_speed < 0.1:
+        if target_speed == 0. and current_speed < 0.1:
             throttle = 0
             brake = 700
         elif throttle < .1 and error_vel < 0:
             throttle = 0
-            decel = max(error_vel, self.decel_limit)
-            brake = abs(decel) * self.vehicle_mass * self.wheel_radius 
+            decel = max(error_vel, self.deceleration_limit)
+            brake = abs(decel) * self.car_mass * self.wheel_radius 
 
         return throttle, brake 

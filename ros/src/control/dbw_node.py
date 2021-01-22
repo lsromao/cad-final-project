@@ -4,7 +4,7 @@ import rospy
 from std_msgs.msg import Bool
 from geometry_msgs.msg import TwistStamped
 from dbw_mkz_msgs.msg import ThrottleCmd, SteeringCmd, BrakeCmd
-from control.controllers import SteeringAngleController, ThrottleBrakeController
+from controllers import SteeringAngleController, ThrottleBrakeController
 
 class DBWNode(object):
     def __init__(self):
@@ -17,7 +17,6 @@ class DBWNode(object):
         max_lateral_acceleration = rospy.get_param('~max_lat_accel', 3.)
         max_steering_angle = rospy.get_param('~max_steer_angle', 8.)
 
-        print('wheel_base', wheel_base)
         self.throttle_brake_controller = ThrottleBrakeController(vehicle_mass, wheel_radius, deceleration_limit)
         self.steering_controller = SteeringAngleController(wheel_base, steering_ratio, max_steering_angle, max_lateral_acceleration)
 
