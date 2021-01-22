@@ -9,8 +9,7 @@ docker run -it --rm -d \
     -v /tmp/log:/root/.ros \
     -v $(pwd):/host \
     --workdir /host \
-    360lab/cad-final-project bash \
-    --gpus=all
+    360lab/cad-final-project bash
 
 echo "Container '$NAME' is now running. You can develop inside it by attaching VSCode to it."
 

@@ -3,3 +3,5 @@ build
 devel
 profile.tmp
 __pycache__
+.vscode/.ropeproject/config.py
+.vscode/.ropeproject/objectdb

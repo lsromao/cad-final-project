@@ -47,9 +47,7 @@ class WaypointUpdater(object):
             rate.sleep()
         # Main loop for the node, running at a fixed rate
         while not rospy.is_shutdown():
-            if self.pose and self.base_lane and self.waypoint_tree:
-                self.process()
-            #self.process()
+            self.process()
             rate.sleep()
         
     def pose_callback(self, msg: PoseStamped):
@@ -58,11 +56,7 @@ class WaypointUpdater(object):
 
 
     def track_waypoints_callback(self, msg: Lane):
-        #self.waypoints_db = WaypointsDatabase(msg.waypoints)
-        self.base_lane = msg.waypoints
-        if not self.waypoints_xy:
-            self.waypoints_xy = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in msg.waypoints]
-            self.waypoint_tree = KDTree(self.waypoints_xy)
+        self.waypoints_db = WaypointsDatabase(msg.waypoints)
     
     def next_traffic_light_waypoint_callback(self, msg: Int32):
         self.next_traffic_light_stopline_index = msg.data
@@ -75,12 +69,9 @@ class WaypointUpdater(object):
         # Advice: make sure to complete dbw_node and have the car driving correctly while ignoring traffic lights before you tackle phase 2 
         msg = Lane()
 
-        x = self.pose.pose.position.x 
-        y = self.pose.pose.position.x 
-
-        closest_idx =  self.waypoint_tree.query([x, y], 1)[1]
+        closest_idx =  self.waypoints_db.get_next_closest_idx(self.current_car_position)
         farthest_idx = closest_idx + self.N
-        base_waypoints = self.base_lane.waypoints[closest_idx:farthest_idx]
+        base_waypoints = self.waypoints_db.waypoints[closest_idx:farthest_idx]
         msg.waypoints = base_waypoints
 
         self.final_waypoints_publisher.publish(msg)
