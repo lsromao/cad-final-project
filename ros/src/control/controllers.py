@@ -79,7 +79,7 @@ class ThrottleBrakeController():
 
         throttle = self.throttle_controller_pid.step(error_vel, sample_time)
 
-        throttle, brake = 1.0, 0.0
+        brake = 0.0
 
         if target_speed == 0. and current_speed < 0.1:
             throttle = 0

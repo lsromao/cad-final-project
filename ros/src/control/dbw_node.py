@@ -9,6 +9,7 @@ from controllers import SteeringAngleController, ThrottleBrakeController
 class DBWNode(object):
     def __init__(self):
         rospy.init_node('dbw_node')
+
         vehicle_mass = rospy.get_param('~vehicle_mass', 1736.35)
         deceleration_limit = rospy.get_param('~decel_limit', -5)
         wheel_radius = rospy.get_param('~wheel_radius', 0.2413)
@@ -30,13 +31,14 @@ class DBWNode(object):
         #   - The coordinate systems is centered on the car, so the linear velocity of the car is linear.x
         # You will need to setup callbacks to refresh the values of the following properties (see waypoint updater for an example)
 
-        rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_callback)
-        rospy.Subscriber('/current_velocity', TwistStamped, self.velocity_callback)
+        rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_callback, queue_size=1)
+        rospy.Subscriber('/current_velocity', TwistStamped, self.velocity_callback, queue_size=1)
 
         self.current_linear_velocity = None
         self.target_linear_velocity = None
         self.target_angular_velocity = None
-    
+        rospy.loginfo(self.current_linear_velocity)
+
         # Main loop
         rate = rospy.Rate(50) # Running at 50 Hz
         while not rospy.is_shutdown():
@@ -51,10 +53,12 @@ class DBWNode(object):
                 rate.sleep()
 
     def twist_callback(self, msg):
+        rospy.loginfo('twist_callback')
         self.target_linear_velocity = msg.twist.linear.x
         self.target_angular_velocity = msg.twist.angular.z
 
     def velocity_callback(self, msg):
+        rospy.loginfo('velocity_callback')
         self.current_linear_velocity = msg.twist.linear.x
 
     def publish(self, throttle: float, brake: float, steer: float):
@@ -78,4 +82,8 @@ class DBWNode(object):
 
 
 if __name__ == '__main__':
-    DBWNode()
+    try:
+        DBWNode()
+    except Exception as ex:
+        rospy.logerr('Could not start control node.')
+        raise ex

@@ -32,9 +32,6 @@ class WaypointUpdater(object):
         self.base_lane = None
         self.pose = None
 
-        self.waypoints_xy = None
-        self.waypoint_tree = None
-
         # Wait until the required info has been received
         rate = rospy.Rate(50) # 50Hz loop
         self.current_car_position = None
@@ -72,7 +69,25 @@ class WaypointUpdater(object):
         closest_idx =  self.waypoints_db.get_next_closest_idx(self.current_car_position)
         farthest_idx = closest_idx + self.N
         base_waypoints = self.waypoints_db.waypoints[closest_idx:farthest_idx]
-        msg.waypoints = base_waypoints
+
+        if self.next_traffic_light_stopline_index == -1 or (self.next_traffic_light_stopline_index >= farthest_idx):
+            msg.waypoints = base_waypoints
+        else:
+            new_points = [] 
+            for i, wp in enumerate(waypoints):
+                point = Waypoint()
+                point.pose = wp.pose
+
+                stop_idx = max(self.next_traffic_light_stopline_index - closest_idx - 2, 0) # Two waypoints back from line so front of car stops at line
+                dist = self.distance(waypoints, i, stop_idx)
+                vel = math.sqrt(2 * self.max_deceleration * dist)
+                if vel < 1.0:
+                    vel = 0.0
+                
+                point.twist.twist.linear.x = min(vel, wp.twist.twist.linear.x)
+                new_points.append(point)
+                
+            msg.waypoints = new_points
 
         self.final_waypoints_publisher.publish(msg)
 

@@ -8,7 +8,7 @@ class WaypointsDatabase:
         self.waypoints = waypoints
         self.waypoints_xy = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in self.waypoints]
         self.waypoint_tree = KDTree(self.waypoints_xy)
-        
+
     def get_next_closest_idx(self, pose):
         # Find the closest waypoints to pose *that comes after pose on the track*
         # If pose is between x0 and x1, closer to x0, this should still return the index/distance of/to x1
@@ -27,3 +27,11 @@ class WaypointsDatabase:
             closest_idx = (closest_idx + 1) % len(self.waypoints_xy)
         
         return closest_idx
+
+    def distance(self, waypoints, wp1, wp2):
+        dist = 0
+        dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
+        for i in range(wp1, wp2+1):
+            dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
+            wp1 = i
+        return dist
