@@ -2,9 +2,9 @@
 # Connected and Autonomous Driving 2020 - Final Project
 
 
-This project is based off the Open Source Unity Simulator from Udacity and its [Self-Driving Car Nanodegree Capstone Project](https://github.com/udacity/CarND-Capstone). Some modifications and customizations have been introduced by us, so don't try to blindly copy existing solutions you might find online.
+This project is based off the Open Source Unity Simulator from Udacity and its [Self-Driving Car Nanodegree Capstone Project](https://github.com/udacity/CarND-Capstone) with some added modifications.
 
-This document introduces the software environment and the way to use the VSCode editor to access a preconfigured docker container and get up and running very quickly. 
+The readme introduces the software environment and explains how to use VSCode to access a preconfigured docker container and get up and running very quickly. 
 
 
 ## Running the simulator and the Docker container
