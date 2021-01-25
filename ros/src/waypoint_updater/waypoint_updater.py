@@ -7,6 +7,7 @@ from std_msgs.msg import Int32
 from WaypointsDatabase import WaypointsDatabase
 import numpy as np
 from scipy.spatial import KDTree
+import math
 
 '''
 This node will publish waypoints ahead of the car's current position.
@@ -74,13 +75,13 @@ class WaypointUpdater(object):
             msg.waypoints = base_waypoints
         else:
             new_points = [] 
-            for i, wp in enumerate(waypoints):
+            for i, wp in enumerate(base_waypoints):
                 point = Waypoint()
                 point.pose = wp.pose
 
-                stop_idx = max(self.next_traffic_light_stopline_index - closest_idx - 2, 0) # Two waypoints back from line so front of car stops at line
-                dist = self.distance(waypoints, i, stop_idx)
-                vel = math.sqrt(2 * self.max_deceleration * dist)
+                stop_idx = max(self.next_traffic_light_stopline_index - closest_idx - 4, 0)
+                dist = self.waypoints_db.distance(base_waypoints, i, stop_idx)
+                vel = math.sqrt(2* self.max_deceleration * 0.90 * dist)
                 if vel < 1.0:
                     vel = 0.0
                 

@@ -11,7 +11,6 @@ from waypoint_updater.WaypointsDatabase import WaypointsDatabase
 import cv2
 import yaml
 import numpy as np
-import cv2
 
 STATE_COUNT_THRESHOLD = 3
 TRAFFIC_LIGHT_VISIBLE_DISTANCE = 75  # Expressed as a number of waypoints
@@ -21,7 +20,7 @@ class TLDetector(object):
         rospy.init_node('tl_detector')
         self.bridge = CvBridge()
 
-        self.use_ground_truth = True # TODO Set to False when you don't want to use ground truth traffic light information any longer
+        self.use_ground_truth = True
         self.detector = TrafficLightDetector()
         self.state = TrafficLight.UNKNOWN
         self.state_count = 0
@@ -45,10 +44,10 @@ class TLDetector(object):
         # Publish waypoint index of the stop line corresponding to next red light
         # If no red light detected, publish -1  
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoints', Int32, queue_size=1)
-        rate = rospy.Rate(2.5) # You can adjust this rate depending on your classifier, but images are published at around ~2-3Hz
+        #rate = rospy.Rate(5.0) # You can adjust this rate depending on your classifier, but images are published at around ~2-3Hz
         while not rospy.is_shutdown():
             self.process()
-            rate.sleep()
+            #rate.sleep()
 
     def process(self): 
         # Find closest traffic light stopline

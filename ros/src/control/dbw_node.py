@@ -37,7 +37,6 @@ class DBWNode(object):
         self.current_linear_velocity = None
         self.target_linear_velocity = None
         self.target_angular_velocity = None
-        rospy.loginfo(self.current_linear_velocity)
 
         # Main loop
         rate = rospy.Rate(50) # Running at 50 Hz
@@ -48,17 +47,14 @@ class DBWNode(object):
                 # TODO Fix control method
                 steering_wheel_angle = self.steering_controller.control(self.current_linear_velocity, self.target_linear_velocity, self.target_angular_velocity) 
                 # TODO Fix control method
-                #throttle, brake, steering_wheel_angle = 1., 0., 0.
                 self.publish(throttle, brake, steering_wheel_angle)
                 rate.sleep()
 
     def twist_callback(self, msg):
-        rospy.loginfo('twist_callback')
         self.target_linear_velocity = msg.twist.linear.x
         self.target_angular_velocity = msg.twist.angular.z
 
     def velocity_callback(self, msg):
-        rospy.loginfo('velocity_callback')
         self.current_linear_velocity = msg.twist.linear.x
 
     def publish(self, throttle: float, brake: float, steer: float):

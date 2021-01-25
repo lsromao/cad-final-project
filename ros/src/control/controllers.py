@@ -14,23 +14,8 @@ class SteeringAngleController():
         self.max_steering_angle = max_steering_angle
     
     def control(self, current_linear_velocity, target_linear_velocity, target_angular_velocity):
-        # TODO
-        # 1. Compute angular velocity:
-        #   - assume angular velocity / linear velocity = target angular velocity / target linear velocity
-        #   - make sure to cap angular velocity to avoid exceeeding max lateral acceleration (clip angular velocity to [-max_angular_vel, max_angular_vel])
-        #   - Compute max allowed angular velocity from given max allowed lateral acceleration using uniform circular motion equations 
         velocity_ang = current_linear_velocity * target_angular_velocity / target_linear_velocity  if abs(target_linear_velocity) > 0. else 0.
         velocity_ang = np.clip(velocity_ang, -self.max_lateral_acc, self.max_lateral_acc)
-        
-        
-        # 2. Compute the vehicle steering angle:
-        #   - if angular velocity is 0, the angle should also be 0
-        #   - compute the turning radius from angular velocity using circular motion equations
-        #   - use the bicycle model equations to compute the steering angle corresponding to the turning radius
-         # 3. Compute the *steering wheel* angle:
-        #   - steering wheel angle = steering angle * steering ratio
-        #   - clip the steering wheel angle to [-max steering wheel angle, max steering wheel angle]
-
         if velocity_ang == 0:
             angle = 0.0
         else:
@@ -52,22 +37,11 @@ class ThrottleBrakeController():
 
         kp = 0.3
         ki = 0.1
-        kd = 0.
-        mn = 0. # Minimum throttle value
-        mx = 0.2 # Maximum throttle value
+        kd = 0.0
         self.throttle_controller_pid = PID(kp, ki, kd)
 
     def control(self, current_speed, target_speed):
-        # TODO You can implement and tune a PID Controller here to control the throttle
-        # TODO After predicting throttle, you can handle braking as a postprocessing step
-        #   - The car has an automatic transmission, so if target velocity is 0 and current linear velocity is small or zero,
-        #        you should apply brake (Need ~700Nm brake so the car won't move when it's currently at speed 0)
-        #   - don't brake and throttle at the same time! 
-        #   - Apply brake if throttle is already small, but you need to slow down
-        #   - In order to get a smooth ride, you should also not decelerate more than the given deceleration limit.
-        # For now, we just blindly accelerate!
-
-        current_speed = self.lowpass_filter.filter(current_speed) # Use LowPass filter to filter noise from velocity
+        current_speed = self.lowpass_filter.filter(current_speed) 
 
         error_vel = target_speed - current_speed
 
@@ -81,12 +55,12 @@ class ThrottleBrakeController():
 
         brake = 0.0
 
-        if target_speed == 0. and current_speed < 0.1:
+        if target_speed == 0.0 and current_speed < 0.1:
             throttle = 0
             brake = 700
-        elif throttle < .1 and error_vel < 0:
-            throttle = 0
+        elif throttle < 0.1 and error_vel < 0.0:
+            throttle = 0.0
             decel = max(error_vel, self.deceleration_limit)
-            brake = abs(decel) * self.car_mass * self.wheel_radius 
+            brake = min(700, abs(decel) * self.car_mass * self.wheel_radius)
 
         return throttle, brake 

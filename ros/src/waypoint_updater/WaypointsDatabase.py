@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.spatial import KDTree
 import rospy
+import math
 
 class WaypointsDatabase:
     """This class can be used to query the closest waypoint to a given (x,y) point"""
