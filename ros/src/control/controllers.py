@@ -35,9 +35,9 @@ class ThrottleBrakeController():
         self.wheel_radius = wheel_radius
         self.last_time = rospy.get_time()
 
-        kp = 0.3
-        ki = 0.1
-        kd = 0.0
+        kp = 1.5
+        ki = 0.001
+        kd = 0.5
         self.throttle_controller_pid = PID(kp, ki, kd)
 
     def control(self, current_speed, target_speed):
