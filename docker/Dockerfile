@@ -91,7 +91,7 @@ RUN pip3 install \
         seaborn \
         tensorflow==2.3.0 \
         scikit-learn \
-        pandas
+        pandas 
 
 # Add cuda libs to the path
 RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda/lib64" >> ~/.bashrc
@@ -126,14 +126,17 @@ ENV ROS_LANG_DISABLE="geneus;genlisp;gennodejs"
 
 ENV CONTAINER_VERSION=0.1.0
 
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
-
-RUN apt-get install nodejs -yqqq 
-
 # Jupyter lab widgets
+RUN apt-get update -yq \
+    && curl -L https://deb.nodesource.com/setup_12.x | bash \
+    && apt-get update -yq \
+    && apt-get install -yq \
+        nodejs 
+
+
 RUN pip3 install ipywidgets && \
     jupyter nbextension enable --sys-prefix --py widgetsnbextension && \
-    jupyter labextension install @jupyter-widgets/jupyterlab-manager@2.0 && \
+    jupyter labextension install @jupyter-widgets/jupyterlab-manager && \
     rm -rf /var/lib/apt/lists/* 
 
 # Additional python dependencies
@@ -147,6 +150,7 @@ RUN pip3 install \
         ujson==1.35 \
         wsaccel==0.6.2 \
         Pillow
+
 
 RUN sed -i 's/self.eio.send(sid, encoded_packet, binary=False)/self.eio.send(sid, encoded_packet)/g' /usr/local/lib/python3.8/dist-packages/socketio/server.py && \
     sed -i 's/self.eio.send(sid, ep, binary=binary)/self.eio.send(sid, ep)/g' /usr/local/lib/python3.8/dist-packages/socketio/server.py
