@@ -2,6 +2,7 @@ from styx_msgs.msg import TrafficLight
 import cv2
 import rospy
 import tensorflow as tf
+import numpy as np
 
 class TrafficLightDetector():
     def __init__(self):
@@ -12,16 +13,12 @@ class TrafficLightDetector():
         rospy.logwarn('Model loaded.')
 
 
-    def detect_state(self, camera_frame):
+    def detect_state(self, camera_frame):     
 
-        image = cv2.imread(camera_frame)
-        image = cv2.resize(image, (512,512))
-        image = image / 255.0
-
-        input_tensor = tf.convert_to_tensor(image)
+        input_tensor = tf.convert_to_tensor(camera_frame)
         input_tensor = input_tensor[tf.newaxis, ...]
 
-        detections = detect_fn(input_tensor)
+        detections = self.detect_fn(input_tensor)
 
         num_detections = int(detections.pop('num_detections'))
         detections = {key: value[0, :num_detections].numpy()
